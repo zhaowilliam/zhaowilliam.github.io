@@ -654,6 +654,26 @@ main > .section + .section { border-top: 1px solid var(--line); }
 .dashboard-note h2 { font-size: 2rem; }
 .dashboard-note p { color: var(--ink-soft); }
 .dashboard-note a { color: var(--teal); font-weight: 680; }
+.export-form { margin-top: 1.5rem; }
+.export-form label { display: block; margin-bottom: 0.45rem; color: var(--ink); font-weight: 720; }
+.export-form > div { display: flex; gap: 0.75rem; align-items: center; }
+.export-form input {
+  width: min(100%, 28rem);
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.7rem;
+  color: var(--ink);
+  background: var(--white);
+  font: inherit;
+}
+.export-form button { flex: 0 0 auto; border: 0; cursor: pointer; font: inherit; }
+.export-status { min-height: 1.7rem; font-size: 0.82rem; }
+.policy-page { max-width: 52rem; }
+.policy-page h1 { max-width: 11ch; }
+.policy-page h2 { margin-top: 2.6rem; font-size: 1.7rem; }
+.policy-page p { color: var(--ink-soft); }
+.policy-page a { color: var(--teal); font-weight: 680; }
 
 /* Publications page */
 main > .section:first-child:not(#about) { padding-top: 7rem; padding-bottom: 4rem; }
@@ -729,6 +749,8 @@ main .section > ol strong { color: var(--ink); }
   .preview-note strong { font-size: 1.12rem; }
   .preview-note div { padding: 1.25rem 0.8rem; }
   .counter-grid { grid-template-columns: 1fr; }
+  .export-form > div { align-items: stretch; flex-direction: column; }
+  .export-form button { align-self: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

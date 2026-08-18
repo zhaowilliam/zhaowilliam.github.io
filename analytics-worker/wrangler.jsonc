@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wenli-site-api",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-08-18",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGIN": "https://zhaowilliam.github.io"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wenli-site-analytics",
+      "database_id": "9662f57d-0c3f-4605-af4e-e8706f10ef4c"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "RATE_LIMITER",
+      "namespace_id": "3818",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
+    }
+  ],
+  "triggers": {
+    "crons": ["17 * * * *"]
+  }
+}

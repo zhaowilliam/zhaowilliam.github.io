@@ -6,6 +6,7 @@
   <title>Wenli Zhao | Earth System Science &amp; Physics-Guided AI</title>
   <meta name="description" content="Wenli Zhao develops physics-guided and interpretable AI to understand and predict coupled carbon, water, energy, and power systems.">
   <meta name="theme-color" content="#103a42">
+  <meta name="analytics-endpoint" content="https://wenli-site-api.wenlizhao.workers.dev">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Wenli Zhao | Earth System Science &amp; Physics-Guided AI">
   <meta property="og:description" content="Observation-constrained science for climate, water, carbon, energy, and AI.">
@@ -20,7 +21,7 @@
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/site.js" defer></script>
 </head>
-<body>
+<body data-analytics-page="home">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
@@ -35,7 +36,7 @@
       <a href="#publications">Publications</a>
       <a href="#teaching">Teaching</a>
       <a href="#news">News</a>
-      <a class="nav-cv" href="assets/documents/Wenli_Zhao_CV.pdf">CV</a>
+      <a class="nav-cv" href="assets/documents/Wenli_Zhao_CV.pdf" data-analytics-event="cv_download" data-analytics-target="header">CV</a>
     </nav>
   </header>
 
@@ -49,7 +50,7 @@
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="#research">Explore my research</a>
-          <a class="button button-secondary" href="assets/documents/Wenli_Zhao_CV.pdf">Download CV</a>
+          <a class="button button-secondary" href="assets/documents/Wenli_Zhao_CV.pdf" data-analytics-event="cv_download" data-analytics-target="hero">Download CV</a>
         </div>
         <div class="profile-links" aria-label="Academic profiles">
           <a href="https://scholar.google.com/citations?user=JUkXETsAAAAJ&amp;hl=en" target="_blank" rel="noopener">Google Scholar</a>
@@ -197,7 +198,7 @@
             <h3>Learning Evaporative Fraction with Memory</h3>
             <p>The complete video abstract explains how interpretable, memory-aware AI reveals ecosystem memory across timescales.</p>
             <p class="media-links">
-              <a href="https://doi.org/10.5446/73776" target="_blank" rel="noopener" data-counter="zhaowilliam.hess-video.doi.live.2026">Video DOI ↗</a>
+              <a href="https://doi.org/10.5446/73776" target="_blank" rel="noopener" data-counter="zhaowilliam.hess-video.doi.live.2026" data-analytics-event="video_doi_click" data-analytics-target="home-video-card">Video DOI ↗</a>
               <a href="https://doi.org/10.5194/egusphere-2025-4082" target="_blank" rel="noopener">Paper preprint ↗</a>
             </p>
             <p class="media-credit">Wenli Zhao (2026), MPI-BGC and Copernicus Publications. <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</p>
@@ -336,7 +337,7 @@
       <a href="https://orcid.org/0000-0001-6152-1692" target="_blank" rel="noopener">ORCID</a>
       <a href="https://www.linkedin.com/in/wenli-zhao-64aa4217a" target="_blank" rel="noopener">LinkedIn</a>
       <a href="https://github.com/zhaowilliam" target="_blank" rel="noopener">GitHub</a>
-      <a href="assets/documents/Wenli_Zhao_CV.pdf">CV</a>
+      <a href="assets/documents/Wenli_Zhao_CV.pdf" data-analytics-event="cv_download" data-analytics-target="footer">CV</a>
     </div>
     <div class="visitor-panel">
       <div class="visitor-panel-copy">
@@ -346,10 +347,10 @@
           <p>Live page views and approximate visitor countries. Select the map for the public geographic summary.</p>
         </div>
       </div>
-      <a class="visitor-map" href="https://info.flagcounter.com/ahHd" target="_blank" rel="noopener" aria-label="Open visitor geography statistics">
-        <img src="https://s01.flagcounter.com/map/ahHd/size_l/txt_173F3B/border_CBD7D2/pageviews_1/viewers_0/flags_0/" alt="Live map of visitor countries and page views" width="800" height="375" loading="lazy">
+      <a class="visitor-map" href="https://info.flagcounter.com/ahHd" target="_blank" rel="noopener" aria-label="Open visitor geography statistics" data-analytics-event="map_click" data-analytics-target="flag-counter-map">
+        <img data-visitor-map data-src="https://s01.flagcounter.com/map/ahHd/size_l/txt_173F3B/border_CBD7D2/pageviews_1/viewers_0/flags_0/" alt="Live map of visitor countries and page views" width="800" height="375" loading="lazy">
       </a>
-      <p class="visitor-privacy">Country-level statistics are aggregated by Flag Counter. Its free map sets no cookies, but the service receives connection data needed to estimate visitor country.</p>
+      <p class="visitor-privacy">The public map shows aggregated visitor geography. Site analytics also record page interactions, IP address, referrer domain, and approximate IP-derived location; raw IP addresses are retained for up to 30 days and are available only to the site owner. <a href="privacy.html">Privacy details</a>.</p>
     </div>
     <p>© 2026 Wenli Zhao</p>
     </div>

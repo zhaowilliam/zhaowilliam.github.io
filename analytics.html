@@ -6,8 +6,10 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Website counters | Wenli Zhao</title>
   <meta name="theme-color" content="#103a42">
+  <meta name="analytics-endpoint" content="https://wenli-site-api.wenlizhao.workers.dev">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/analytics-dashboard.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -51,6 +53,19 @@
         <h2>Reading the click rate</h2>
         <p>Validation baseline on August 18, 2026: subtract 1 from every counter before calculating post-launch rates. Official-video click rate ≈ adjusted official video opens ÷ adjusted homepage views. Teaser play rate ≈ adjusted teaser plays ÷ adjusted homepage views.</p>
         <p>The geographic map includes two New York test pageviews. For country-level history, open the <a href="https://info.flagcounter.com/ahHd" target="_blank" rel="noopener">visitor map statistics ↗</a>.</p>
+      </div>
+
+      <div class="dashboard-note">
+        <h2>Private event export</h2>
+        <p>Download all available page-view and click records as one CSV. The export retrieves records in batches of 5,000. It includes raw IP addresses only for records no more than 30 days old, plus approximate country, region, city, postal code, coordinates, and network organization. Location is inferred from the network connection and is not GPS-level positioning.</p>
+        <form class="export-form" id="analytics-export-form">
+          <label for="analytics-token">Private export token</label>
+          <div>
+            <input id="analytics-token" name="token" type="password" autocomplete="off" required>
+            <button class="button button-primary" type="submit">Download all CSV</button>
+          </div>
+        </form>
+        <p class="export-status" id="analytics-export-status" role="status" aria-live="polite">The token is used only for this request and is not stored in the page. Delete downloaded CSV files within 30 days; local copies are outside the website's automatic cleanup.</p>
       </div>
     </section>
   </main>

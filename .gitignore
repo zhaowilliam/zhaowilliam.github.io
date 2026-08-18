@@ -1,0 +1,5 @@
+analytics-worker/.dev.vars
+analytics-worker/.admin-token
+analytics-worker/.wrangler/
+analytics-worker/node_modules/
+wenli-site-events-*.csv

@@ -6,6 +6,7 @@
   <title>Publications | Wenli Zhao</title>
   <meta name="description" content="Peer-reviewed publications and current manuscripts by Wenli Zhao in Earth system science, ecohydrology, physics-guided AI, and climate-energy research.">
   <meta name="theme-color" content="#103a42">
+  <meta name="analytics-endpoint" content="https://wenli-site-api.wenlizhao.workers.dev">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Publications | Wenli Zhao">
   <meta property="og:description" content="Peer-reviewed publications and current work in Earth system science, physics-guided AI, and climate-energy research.">
@@ -17,7 +18,7 @@
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/site.js" defer></script>
 </head>
-<body>
+<body data-analytics-page="publications">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
@@ -30,7 +31,7 @@
       <a href="publications.html" aria-current="page">Publications</a>
       <a href="index.html#teaching">Teaching</a>
       <a href="index.html#news">News</a>
-      <a class="nav-cv" href="assets/documents/Wenli_Zhao_CV.pdf">CV</a>
+      <a class="nav-cv" href="assets/documents/Wenli_Zhao_CV.pdf" data-analytics-event="cv_download" data-analytics-target="publications-header">CV</a>
     </nav>
   </header>
 
@@ -45,7 +46,7 @@
       <div class="profile-links" aria-label="Publication profiles and downloads">
         <a href="https://scholar.google.com/citations?user=JUkXETsAAAAJ&amp;hl=en">Google Scholar</a>
         <a href="https://orcid.org/0000-0001-6152-1692">ORCID</a>
-        <a href="assets/documents/Wenli_Zhao_CV.pdf">Full CV</a>
+        <a href="assets/documents/Wenli_Zhao_CV.pdf" data-analytics-event="cv_download" data-analytics-target="publications-intro">Full CV</a>
       </div>
     </section>
 
@@ -62,7 +63,7 @@
           <h3>Learning Evaporative Fraction with Memory</h3>
           <p>Zhao, W.*, Winkler, A. J., Reichstein, M., Orth, R., &amp; Gentine, P. (2026).</p>
           <p class="card-tags">HESS · Accepted / in production · Highlight Paper</p>
-          <p class="media-links"><a href="https://doi.org/10.5194/egusphere-2025-4082">Read the preprint</a><a href="https://doi.org/10.5446/73776" target="_blank" rel="noopener" data-counter="zhaowilliam.hess-video.doi.live.2026">Watch the video abstract</a></p>
+          <p class="media-links"><a href="https://doi.org/10.5194/egusphere-2025-4082">Read the preprint</a><a href="https://doi.org/10.5446/73776" target="_blank" rel="noopener" data-counter="zhaowilliam.hess-video.doi.live.2026" data-analytics-event="video_doi_click" data-analytics-target="publications-featured">Watch the video abstract</a></p>
         </article>
 
         <article class="research-card">
@@ -137,7 +138,7 @@
           <strong>Learning Evaporative Fraction with Memory.</strong>
           <em>Hydrology and Earth System Sciences</em>. <strong>Accepted; in production; Highlight Paper.</strong>
           <a href="https://doi.org/10.5194/egusphere-2025-4082">Preprint</a>;
-          <a href="https://doi.org/10.5446/73776" target="_blank" rel="noopener" data-counter="zhaowilliam.hess-video.doi.live.2026">video abstract</a>.
+          <a href="https://doi.org/10.5446/73776" target="_blank" rel="noopener" data-counter="zhaowilliam.hess-video.doi.live.2026" data-analytics-event="video_doi_click" data-analytics-target="publications-full-list">video abstract</a>.
         </li>
         <li>
           Zhao, W.*, et al. (2026).
@@ -361,6 +362,7 @@
         <a href="https://scholar.google.com/citations?user=JUkXETsAAAAJ&amp;hl=en">Google Scholar</a>
         <a href="https://orcid.org/0000-0001-6152-1692">ORCID</a>
         <a href="https://github.com/zhaowilliam">GitHub</a>
+        <a href="privacy.html">Privacy</a>
       </div>
     </div>
   </footer>
