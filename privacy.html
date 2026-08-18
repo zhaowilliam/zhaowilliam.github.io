@@ -9,6 +9,7 @@
   <meta name="analytics-endpoint" content="https://wenli-site-api.wenlizhao.workers.dev">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/navigation.js" defer></script>
   <script src="assets/site.js" defer></script>
 </head>
 <body data-analytics-page="privacy">
@@ -18,9 +19,18 @@
       <span class="wordmark-mark" aria-hidden="true">WZ</span>
       <span>Wenli Zhao</span>
     </a>
-    <nav class="site-nav" aria-label="Primary navigation">
-      <a href="index.html">Home</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+      <span class="nav-toggle-icon" aria-hidden="true"></span>
+      <span>Menu</span>
+    </button>
+    <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation">
+      <a href="index.html#about">About</a>
+      <a href="index.html#research">Research</a>
+      <a href="index.html#videos">Videos</a>
       <a href="publications.html">Publications</a>
+      <a href="index.html#teaching">Teaching</a>
+      <a href="index.html#news">News</a>
+      <a class="nav-cv" href="assets/documents/Wenli_Zhao_CV.pdf">CV</a>
     </nav>
   </header>
 
