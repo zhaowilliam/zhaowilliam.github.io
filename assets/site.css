@@ -701,8 +701,41 @@ main > .section + .section { border-top: 1px solid var(--line); }
   background: var(--white);
   font: inherit;
 }
-.export-form button { flex: 0 0 auto; border: 0; cursor: pointer; font: inherit; }
+.export-form button { flex: 0 0 auto; cursor: pointer; font: inherit; }
+.export-form button.button-primary { border: 1px solid transparent; }
 .export-status { min-height: 1.7rem; font-size: 0.82rem; }
+.private-map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  margin-top: 1.5rem;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 1rem;
+  background: var(--white) url("images/world-map.svg") center / 100% 100% no-repeat;
+}
+.private-map[hidden] { display: none; }
+.private-map-markers { position: absolute; inset: 0; }
+.private-map-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--teal-dark);
+  border-radius: 50%;
+  color: var(--teal-dark);
+  background: rgba(217, 154, 62, 0.9);
+  box-shadow: 0 2px 8px rgba(16, 58, 66, 0.24);
+  font: 700 0.68rem/1 Inter, sans-serif;
+  cursor: pointer;
+}
+.private-map-marker:hover,
+.private-map-marker:focus-visible { z-index: 2; background: var(--white); }
+.private-map-detail { min-height: 1.7rem; margin-top: 0.8rem; color: var(--ink-soft); font-size: 0.88rem; }
+.private-map-detail[hidden] { display: none; }
 .policy-page { max-width: 52rem; }
 .policy-page h1 { max-width: 11ch; }
 .policy-page h2 { margin-top: 2.6rem; font-size: 1.7rem; }

@@ -38,7 +38,7 @@
     <section class="section analytics-dashboard">
       <p class="eyebrow">Unlisted owner dashboard</p>
       <h1>Website counters</h1>
-      <p class="dashboard-intro">Lightweight counters for homepage views and first video interactions. This page is omitted from site navigation and asks search engines not to index it, but it is not password protected. Counts are approximate: reloads can add views, while each video event is recorded only once per page load.</p>
+      <p class="dashboard-intro">Lightweight counters for homepage views and first video interactions. This page is omitted from site navigation and asks search engines not to index it; the visitor map and CSV export require the private token. Counts are approximate: reloads can add views, while each video event is recorded only once per page load.</p>
 
       <div class="counter-grid">
         <article class="counter-card">
@@ -66,16 +66,21 @@
       </div>
 
       <div class="dashboard-note">
-        <h2>Private event export</h2>
-        <p>Download all available page-view and click records as one CSV. The export retrieves records in batches of 5,000. It includes raw IP addresses only for records no more than 30 days old, plus approximate country, region, city, postal code, coordinates, and network organization. Location is inferred from the network connection and is not GPS-level positioning.</p>
+        <h2>Private visitor map and export</h2>
+        <p>View approximate city-level visitor locations on a private map or download all page-view and click records as one CSV. Each dot represents one city-level location, and its number is the approximate visitor count. The map receives only aggregated locations and counts—never IP addresses or visitor identifiers. The export retrieves records in batches of 5,000 and includes raw IP addresses only for records no more than 30 days old, plus approximate country, region, city, postal code, coordinates, and network organization. Location is inferred from the network connection and is not GPS-level positioning.</p>
         <form class="export-form" id="analytics-export-form">
-          <label for="analytics-token">Private export token</label>
+          <label for="analytics-token">Private analytics token</label>
           <div>
             <input id="analytics-token" name="token" type="password" autocomplete="off" required>
-            <button class="button button-primary" type="submit">Download all CSV</button>
+            <button class="button button-primary" type="submit" name="action" value="map">Show visitor map</button>
+            <button class="button button-secondary" type="submit" name="action" value="download">Download all CSV</button>
           </div>
         </form>
         <p class="export-status" id="analytics-export-status" role="status" aria-live="polite">The token is used only for this request and is not stored in the page. Delete downloaded CSV files within 30 days; local copies are outside the website's automatic cleanup.</p>
+        <div class="private-map" id="private-visitor-map" role="region" aria-label="Approximate visitor locations" hidden>
+          <div class="private-map-markers" id="private-map-markers"></div>
+        </div>
+        <p class="private-map-detail" id="private-map-detail" role="status" aria-live="polite" hidden></p>
       </div>
     </section>
   </main>
