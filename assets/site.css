@@ -679,7 +679,6 @@ main > .section + .section { border-top: 1px solid var(--line); }
 }
 
 .visitor-map img { width: 100%; height: auto; }
-.visitor-privacy { grid-column: 1 / -1; margin: -0.6rem 0 0 !important; font-size: 0.7rem; }
 .analytics-dashboard .dashboard-intro { max-width: 48rem; color: var(--ink-soft); font-size: 1.08rem; }
 .counter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 3rem; }
 .counter-card { min-height: 9rem; padding: 1.4rem; border: 1px solid var(--line); border-radius: 1.1rem; background: var(--white); }
@@ -764,7 +763,6 @@ main .section > ol strong { color: var(--ink); }
   .footer-inner,
   .site-footer > .section { width: min(calc(100% - 2rem), var(--max)); }
   .visitor-panel { grid-template-columns: 1fr; }
-  .visitor-privacy { grid-column: 1; }
 }
 
 @media (max-width: 700px) {
