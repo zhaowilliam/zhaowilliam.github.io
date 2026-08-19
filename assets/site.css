@@ -333,6 +333,9 @@ main > .section + .section { border-top: 1px solid var(--line); }
 .section-heading .eyebrow { grid-column: 1 / -1; }
 .section-heading > p:last-child { margin: 0; color: var(--ink-soft); font-size: 1.05rem; }
 
+.job-market { padding-block: 4rem; }
+.job-market .section-heading { margin-bottom: 0; }
+
 .path-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -737,6 +740,7 @@ main .section > ol strong { color: var(--ink); }
   h1 { max-width: 12ch; }
   .hero-profile { justify-self: start; width: min(84vw, 22rem); margin: 1rem 0 0 1.4rem; }
   .section { width: min(calc(100% - 2rem), var(--max)); padding: 5.5rem 0; }
+  .job-market { padding-block: 3.75rem; }
   .section-heading { grid-template-columns: 1fr; row-gap: 1.25rem; }
   .research-grid { grid-template-columns: 1fr; }
   .media-grid { grid-template-columns: 1fr; }
