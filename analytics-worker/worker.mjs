@@ -34,6 +34,12 @@ export default {
         return await exportCsv(request, env, url);
       }
 
+      if (url.pathname === "/locations.json") {
+        if (request.method === "OPTIONS") return exportPreflight(request, env);
+        if (request.method !== "GET") return methodNotAllowed("GET, OPTIONS");
+        return await locationsJson(request, env);
+      }
+
       return text("Not found", 404);
     } catch (error) {
       const status = error instanceof HttpError ? error.status : 500;
@@ -183,23 +189,9 @@ function exportPreflight(request, env) {
 }
 
 async function exportCsv(request, env, url) {
-  const origin = request.headers.get("origin");
-  if (origin) requireAllowedOrigin(origin, env);
-  const adminCors = origin
-    ? corsHeaders(origin, "GET, OPTIONS", "Authorization")
-    : {};
-
-  if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 32) {
-    return text("Export unavailable", 503, adminCors);
-  }
-
-  const match = /^Bearer ([^\s]+)$/u.exec(request.headers.get("authorization") || "");
-  if (!match || !(await secretsEqual(match[1], env.ADMIN_TOKEN))) {
-    return text("Unauthorized", 401, {
-      ...adminCors,
-      "WWW-Authenticate": "Bearer",
-    });
-  }
+  const access = await authorizePrivateGet(request, env);
+  if (access.response) return access.response;
+  const { origin, adminCors } = access;
 
   const limit = integerParam(url.searchParams.get("limit"), 5000, 1, 10000);
   const before = integerParam(
@@ -247,6 +239,69 @@ async function exportCsv(request, env, url) {
   if (results.length) headers["X-Next-Before"] = String(results.at(-1).id);
 
   return new Response(rows.join("\r\n"), { headers });
+}
+
+async function locationsJson(request, env) {
+  const access = await authorizePrivateGet(request, env);
+  if (access.response) return access.response;
+
+  const { results } = await env.DB.prepare(`
+    SELECT
+      country,
+      region,
+      city,
+      ROUND(AVG(latitude), 1) AS latitude,
+      ROUND(AVG(longitude), 1) AS longitude,
+      COUNT(DISTINCT visitor_hash) AS visitors,
+      COUNT(*) AS page_views,
+      replace(MAX(occurred_at), ' ', 'T') || 'Z' AS last_seen
+    FROM events
+    WHERE event = 'page_view'
+      AND latitude IS NOT NULL
+      AND longitude IS NOT NULL
+      AND NULLIF(TRIM(country), '') IS NOT NULL
+      AND NULLIF(TRIM(city), '') IS NOT NULL
+    GROUP BY
+      country,
+      region,
+      city
+    ORDER BY visitors DESC, page_views DESC, last_seen DESC
+    LIMIT 1000
+  `).all();
+
+  return Response.json(
+    { locations: results },
+    {
+      headers: {
+        ...baseHeaders(),
+        ...access.adminCors,
+      },
+    },
+  );
+}
+
+async function authorizePrivateGet(request, env) {
+  const origin = request.headers.get("origin");
+  if (origin) requireAllowedOrigin(origin, env);
+  const adminCors = origin
+    ? corsHeaders(origin, "GET, OPTIONS", "Authorization")
+    : {};
+
+  if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 32) {
+    return { response: text("Private analytics unavailable", 503, adminCors) };
+  }
+
+  const match = /^Bearer ([^\s]+)$/u.exec(request.headers.get("authorization") || "");
+  if (!match || !(await secretsEqual(match[1], env.ADMIN_TOKEN))) {
+    return {
+      response: text("Unauthorized", 401, {
+        ...adminCors,
+        "WWW-Authenticate": "Bearer",
+      }),
+    };
+  }
+
+  return { origin, adminCors };
 }
 
 async function readLimitedJson(request) {

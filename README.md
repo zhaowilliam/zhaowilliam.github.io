@@ -26,9 +26,9 @@ Then open <http://localhost:4173/>.
 
 - The homepage footer uses Flag Counter map ID `ahHd` for aggregate page views and country-level visitor geography.
 - Legacy badge counters in `assets/site.js` retain the public click/play-rate baseline.
-- `analytics-worker/` contains the dependency-free Cloudflare Worker and D1 schema for page views, selected interactions, raw IP retention for 30 days, approximate IP-derived geography, and private CSV export.
+- `analytics-worker/` contains the dependency-free Cloudflare Worker and D1 schema for page views, selected interactions, raw IP retention for 30 days, approximate IP-derived geography, a token-protected city-level map feed, and private CSV export.
 - The production endpoint is `https://wenli-site-api.wenlizhao.workers.dev`; it is set in the `analytics-endpoint` meta tag on tracked pages.
-- Open `/analytics.html` for the legacy counters and token-protected CSV download. The dashboard retrieves all available records in 5,000-row batches. Never commit `ADMIN_TOKEN`, `HASH_SECRET`, `.dev.vars`, or a downloaded event CSV; delete local CSV exports within 30 days.
+- Open `/analytics.html` for the legacy counters, token-protected visitor map, and CSV download. The map calls `/locations.json`, which returns at most 1,000 city-level aggregates: one dot per city, an approximate visitor count, total page views, and the latest visit time. It never returns IP addresses or visitor identifiers. Visitor counts are approximate because the pseudonymous visitor hash rotates monthly. The CSV export retrieves all available records in 5,000-row batches. Never commit `ADMIN_TOKEN`, `HASH_SECRET`, `.dev.vars`, or a downloaded event CSV; delete local CSV exports within 30 days.
 - The private export token is stored locally in the ignored file `analytics-worker/.admin-token` with owner-only permissions.
 - Local previews never increment the lightweight counters. Launch-validation baseline (August 18, 2026): subtract `1` from each displayed counter; the Flag Counter map includes `2` New York test pageviews.
 

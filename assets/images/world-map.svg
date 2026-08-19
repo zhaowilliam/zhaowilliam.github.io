@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" role="img" aria-labelledby="title desc">
+  <title id="title">World map</title>
+  <desc id="desc">Simplified equirectangular world map used to plot approximate visitor locations.</desc>
+  <rect width="1000" height="500" fill="#eef2ed"/>
+  <g fill="none" stroke="#cbd7d2" stroke-width="1" opacity=".75">
+    <path d="M0 83h1000M0 167h1000M0 250h1000M0 333h1000M0 417h1000"/>
+    <path d="M167 0v500M333 0v500M500 0v500M667 0v500M833 0v500"/>
+  </g>
+  <g fill="#b8c8bd" stroke="#91a58d" stroke-width="2" stroke-linejoin="round">
+    <path d="M20 115 75 72 155 50 245 62 315 98 345 135 318 162 270 151 240 181 194 204 143 187 112 154 58 153Z"/>
+    <path d="M230 185 278 210 318 257 354 278 394 315 378 379 344 435 313 397 299 340 273 297 254 248Z"/>
+    <path d="M392 42 447 32 472 65 446 105 405 98 380 68Z"/>
+    <path d="M455 131 500 106 550 112 580 138 552 163 515 161 487 182 460 169Z"/>
+    <path d="M463 181 515 160 575 176 616 225 600 301 568 375 526 345 504 292 474 254 444 214Z"/>
+    <path d="M552 118 620 79 712 64 793 91 870 101 956 140 984 178 945 199 893 181 845 207 786 193 739 221 692 199 658 167 606 157Z"/>
+    <path d="M737 206 780 226 794 264 764 278 744 245Z"/>
+    <path d="M818 319 878 297 934 330 920 383 858 398 813 365Z"/>
+    <path d="M957 374 980 363 990 399 970 419 953 401Z"/>
+    <path d="M30 463 150 449 285 458 420 447 565 461 707 448 845 459 970 446 1000 470 1000 500 0 500 0 475Z"/>
+  </g>
+</svg>
