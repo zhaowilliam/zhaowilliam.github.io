@@ -4,12 +4,13 @@
   const form = document.querySelector("#analytics-export-form");
   const status = document.querySelector("#analytics-export-status");
   const mapElement = document.querySelector("#private-visitor-map");
-  const mapMarkers = document.querySelector("#private-map-markers");
   const mapDetail = document.querySelector("#private-map-detail");
   const endpoint = document
     .querySelector('meta[name="analytics-endpoint"]')
     ?.content.trim()
     .replace(/\/$/u, "");
+  let visitorMap;
+  let visitorLayer;
 
   if (!form || !status) return;
 
@@ -125,31 +126,83 @@
   }
 
   function renderMap(locations) {
-    if (!mapElement || !mapMarkers || !mapDetail) throw new Error("The map could not be loaded.");
+    if (!mapElement || !mapDetail || !window.L) {
+      throw new Error("The interactive map could not be loaded.");
+    }
+
     mapElement.hidden = false;
-    mapMarkers.replaceChildren();
     mapDetail.hidden = true;
 
+    if (!visitorMap) {
+      visitorMap = window.L.map(mapElement, {
+        preferCanvas: false,
+        scrollWheelZoom: true,
+        worldCopyJump: true,
+      }).setView([20, 0], 2);
+
+      window.L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+          maxZoom: 19,
+          attribution:
+            '<a href="https://goto.arcgisonline.com/maps/World_Imagery" target="_blank" rel="noopener">Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community</a>',
+        },
+      ).addTo(visitorMap);
+      visitorLayer = window.L.layerGroup().addTo(visitorMap);
+    } else {
+      visitorLayer.clearLayers();
+    }
+
+    const bounds = window.L.latLngBounds([]);
+
     locations.forEach((location) => {
-      const label = [location.city, location.region, location.country].filter(Boolean).join(", ") || "Approximate location";
-      const marker = document.createElement("button");
+      const label = [location.city, location.region, location.country].filter(Boolean).join(", ");
       const visitors = location.visitors;
       const pageViews = location.pageViews;
       const lastSeen = formatDateTime(location.lastSeen);
-      const details = `${label} — ${visitors} approximate visitor${visitors === 1 ? "" : "s"} · ${pageViews} page view${pageViews === 1 ? "" : "s"}${lastSeen ? `; last seen ${lastSeen}` : ""}.`;
-      marker.type = "button";
-      marker.className = "private-map-marker";
-      marker.textContent = String(visitors);
-      marker.title = details;
-      marker.setAttribute("aria-label", details);
-      marker.style.left = `${((location.longitude + 180) / 360) * 100}%`;
-      marker.style.top = `${((90 - location.latitude) / 180) * 100}%`;
-      marker.style.setProperty("--marker-size", `${Math.min(2.2, 1.1 + Math.log2(visitors + 1) * 0.2)}rem`);
-      marker.addEventListener("click", () => {
+      const details = `${label || "Approximate location"}: ${visitors} approximate visitor${visitors === 1 ? "" : "s"}, ${pageViews} page view${pageViews === 1 ? "" : "s"}. Latest visit: ${lastSeen || "unknown"}.`;
+      const popup = document.createElement("p");
+      popup.textContent = details;
+      const marker = window.L.circleMarker([location.latitude, location.longitude], {
+        radius: Math.min(18, 6 + Math.log2(visitors + 1) * 2),
+        color: "#103a42",
+        weight: 2,
+        fillColor: "#d99a3e",
+        fillOpacity: 0.9,
+      });
+      marker.bindTooltip(label || "Approximate visitor location");
+      marker.bindPopup(popup);
+      const showDetails = () => {
         mapDetail.textContent = details;
         mapDetail.hidden = false;
-      });
-      mapMarkers.append(marker);
+      };
+      marker.on("click", showDetails);
+      marker.addTo(visitorLayer);
+
+      const markerElement = marker.getElement();
+      if (markerElement) {
+        markerElement.setAttribute("tabindex", "0");
+        markerElement.setAttribute("role", "button");
+        markerElement.setAttribute("aria-label", details);
+        markerElement.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          marker.openPopup();
+          showDetails();
+        });
+      }
+      bounds.extend(marker.getLatLng());
+    });
+
+    requestAnimationFrame(() => {
+      visitorMap.invalidateSize({ pan: false });
+      if (locations.length === 0) {
+        visitorMap.setView([20, 0], 2);
+      } else if (locations.length === 1) {
+        visitorMap.setView(bounds.getCenter(), 5);
+      } else {
+        visitorMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 7 });
+      }
     });
   }
 

@@ -139,7 +139,15 @@ button:focus-visible {
 
 .site-nav a:hover,
 .site-nav a:focus-visible,
-.site-nav [aria-current="page"] { color: var(--teal); }
+.site-nav [aria-current="page"],
+.site-nav [aria-current="location"] { color: var(--teal); }
+
+.site-nav [aria-current="location"]:not(.nav-cv) {
+  text-decoration-line: underline;
+  text-decoration-color: var(--amber);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.45rem;
+}
 
 .site-nav .nav-cv {
   padding: 0.4rem 0.84rem;
@@ -333,8 +341,21 @@ main > .section + .section { border-top: 1px solid var(--line); }
 .section-heading .eyebrow { grid-column: 1 / -1; }
 .section-heading > p:last-child { margin: 0; color: var(--ink-soft); font-size: 1.05rem; }
 
-.job-market { padding-block: 4rem; }
-.job-market .section-heading { margin-bottom: 0; }
+.job-market { padding-block: 2.5rem; }
+
+.job-market .section-heading {
+  align-items: center;
+  row-gap: 0.75rem;
+  margin-bottom: 0;
+}
+
+.job-market .section-heading h2 {
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+}
+
+.job-market .section-heading > p:last-child {
+  font-size: 0.98rem;
+}
 
 .path-grid {
   display: grid;
@@ -707,33 +728,20 @@ main > .section + .section { border-top: 1px solid var(--line); }
 .private-map {
   position: relative;
   width: 100%;
-  aspect-ratio: 2 / 1;
+  height: clamp(20rem, 56vh, 40rem);
+  min-height: 20rem;
   margin-top: 1.5rem;
   overflow: hidden;
   border: 1px solid var(--line-strong);
   border-radius: 1rem;
-  background: var(--white) url("images/world-map.svg") center / 100% 100% no-repeat;
+  background: #dbe4e6;
+  font-family: Inter, sans-serif;
 }
 .private-map[hidden] { display: none; }
-.private-map-markers { position: absolute; inset: 0; }
-.private-map-marker {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  width: var(--marker-size);
-  height: var(--marker-size);
-  padding: 0;
-  transform: translate(-50%, -50%);
-  border: 2px solid var(--teal-dark);
-  border-radius: 50%;
-  color: var(--teal-dark);
-  background: rgba(217, 154, 62, 0.9);
-  box-shadow: 0 2px 8px rgba(16, 58, 66, 0.24);
-  font: 700 0.68rem/1 Inter, sans-serif;
-  cursor: pointer;
+.private-map .leaflet-control-attribution {
+  max-width: calc(100% - 3rem);
+  font-size: 0.66rem;
 }
-.private-map-marker:hover,
-.private-map-marker:focus-visible { z-index: 2; background: var(--white); }
 .private-map-detail { min-height: 1.7rem; margin-top: 0.8rem; color: var(--ink-soft); font-size: 0.88rem; }
 .private-map-detail[hidden] { display: none; }
 .policy-page { max-width: 52rem; }
@@ -772,7 +780,7 @@ main .section > ol strong { color: var(--ink); }
   h1 { max-width: 12ch; }
   .hero-profile { justify-self: start; width: min(84vw, 22rem); margin: 1rem 0 0 1.4rem; }
   .section { width: min(calc(100% - 2rem), var(--max)); padding: 5.5rem 0; }
-  .job-market { padding-block: 3.75rem; }
+  .job-market { padding-block: 2.25rem; }
   .section-heading { grid-template-columns: 1fr; row-gap: 1.25rem; }
   .research-grid { grid-template-columns: 1fr; }
   .media-grid { grid-template-columns: 1fr; }
@@ -843,6 +851,11 @@ main .section > ol strong { color: var(--ink); }
 }
 
 @media (max-width: 590px) {
+  .private-map {
+    height: 50vh;
+    min-height: 17rem;
+  }
+
   .hero { padding-top: 3.7rem; }
   h1 { font-size: clamp(2.85rem, 14vw, 4.6rem); }
   .feature-story,
