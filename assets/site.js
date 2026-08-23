@@ -54,68 +54,6 @@
   if (isHomepage) countEvent("zhaowilliam.home.live.2026");
   track("page_view", document.body.dataset.analyticsPage || null);
 
-  const visitorMapMarkers = document.querySelector("[data-visitor-map-markers]");
-  const visitorMapStatus = document.querySelector("[data-visitor-map-status]");
-
-  async function loadPublicVisitorMap() {
-    if (!visitorMapMarkers || !visitorMapStatus) return;
-    if (analyticsOptOut) {
-      visitorMapStatus.textContent = "Visitor regions are hidden by your privacy preference.";
-      return;
-    }
-    if (!analyticsEndpoint) {
-      visitorMapStatus.textContent = "Visitor region data are temporarily unavailable.";
-      return;
-    }
-
-    try {
-      visitorMapStatus.textContent = "Loading privacy-protected visitor regions…";
-      const response = await fetch(`${analyticsEndpoint}/public-locations.json`, { credentials: "omit" });
-      if (!response.ok) throw new Error("Map request failed");
-      const payload = await response.json();
-      if (!Array.isArray(payload.locations)) throw new Error("Invalid map response");
-
-      const markers = document.createDocumentFragment();
-      let count = 0;
-
-      payload.locations.forEach((location) => {
-        if (!location || typeof location !== "object") return;
-        const latitude = Number(location.latitude);
-        const longitude = Number(location.longitude);
-        if (
-          !Number.isFinite(latitude)
-          || latitude < -90
-          || latitude > 90
-          || !Number.isFinite(longitude)
-          || longitude < -180
-          || longitude > 180
-        ) return;
-
-        const region = typeof location.region === "string" ? location.region : "";
-        const country = typeof location.country === "string" ? location.country : "";
-        const label = [region, country].filter(Boolean).join(", ") || "Approximate visitor region";
-        const marker = document.createElement("span");
-        marker.className = "visitor-map-marker";
-        marker.setAttribute("role", "listitem");
-        marker.setAttribute("aria-label", label);
-        marker.title = label;
-        marker.style.left = `clamp(0.8rem, ${((longitude + 180) / 360) * 100}%, calc(100% - 0.8rem))`;
-        marker.style.top = `clamp(0.8rem, ${((90 - latitude) / 180) * 100}%, calc(100% - 0.8rem))`;
-        markers.append(marker);
-        count += 1;
-      });
-
-      visitorMapMarkers.replaceChildren(markers);
-      visitorMapStatus.textContent = count
-        ? `Showing ${count} broad visitor region${count === 1 ? "" : "s"}; regions below the configured threshold are withheld.`
-        : "No visitor region currently meets the public privacy threshold.";
-    } catch {
-      visitorMapStatus.textContent = "Visitor region data are temporarily unavailable.";
-    }
-  }
-
-  void loadPublicVisitorMap();
-
   document.querySelectorAll("[data-counter]").forEach((link) => {
     link.addEventListener("click", () => countEvent(link.dataset.counter), { once: true });
   });

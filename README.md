@@ -24,7 +24,6 @@ Then open <http://localhost:4173/>.
 
 ## Lightweight analytics
 
-- The homepage footer calls `/public-locations.json` and plots only completed-day, state-or-region-level aggregates that meet the configured threshold of five monthly pseudonymous network identifiers and ten page views. It uses the local `world-map.svg` and does not expose IP addresses, cities, identifiers, timestamps, or regions below that threshold.
 - Legacy badge counters in `assets/site.js` retain the public click/play-rate baseline.
 - `analytics-worker/` contains the dependency-free Cloudflare Worker and D1 schema for page views, selected interactions, raw IP retention for 30 days, approximate IP-derived geography, a token-protected city-level map feed, and private CSV export.
 - The production endpoint is `https://wenli-site-api.wenlizhao.workers.dev`; it is set in the `analytics-endpoint` meta tag on tracked pages.
