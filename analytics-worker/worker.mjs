@@ -40,6 +40,12 @@ export default {
         return await locationsJson(request, env);
       }
 
+      if (url.pathname === "/public-locations.json") {
+        if (request.method === "OPTIONS") return publicMapPreflight();
+        if (request.method !== "GET") return methodNotAllowed("GET, OPTIONS");
+        return await publicLocationsJson(env);
+      }
+
       return text("Not found", 404);
     } catch (error) {
       const status = error instanceof HttpError ? error.status : 500;
@@ -280,6 +286,44 @@ async function locationsJson(request, env) {
   );
 }
 
+async function publicLocationsJson(env) {
+  const { results } = await env.DB.prepare(`
+    SELECT
+      country,
+      region,
+      ROUND(AVG(latitude), 0) AS latitude,
+      ROUND(AVG(longitude), 0) AS longitude
+    FROM events
+    WHERE event = 'page_view'
+      AND occurred_at >= datetime(date('now'), '-30 days')
+      AND occurred_at < datetime(date('now'))
+      AND latitude IS NOT NULL
+      AND longitude IS NOT NULL
+      AND NULLIF(TRIM(country), '') IS NOT NULL
+      AND NULLIF(TRIM(region), '') IS NOT NULL
+    GROUP BY country, region
+    HAVING COUNT(DISTINCT visitor_hash) >= 5
+      AND COUNT(*) >= 10
+    ORDER BY COUNT(*) DESC
+    LIMIT 100
+  `).all();
+
+  return Response.json(
+    { locations: results },
+    { headers: publicMapHeaders() },
+  );
+}
+
+function publicMapPreflight() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      ...publicMapHeaders(),
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+
 async function authorizePrivateGet(request, env) {
   const origin = request.headers.get("origin");
   if (origin) requireAllowedOrigin(origin, env);
@@ -443,6 +487,15 @@ function corsHeaders(origin, methods = "POST, OPTIONS", headers = "Content-Type"
     "Access-Control-Allow-Methods": methods,
     "Access-Control-Allow-Headers": headers,
     "Vary": "Origin",
+  };
+}
+
+function publicMapHeaders() {
+  return {
+    ...baseHeaders(),
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Cache-Control": "public, max-age=3600",
   };
 }
 

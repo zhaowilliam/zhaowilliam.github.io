@@ -408,12 +408,16 @@
         <div class="globe-mark" aria-hidden="true"><span></span></div>
         <div>
           <p class="visitor-kicker">Global visitors</p>
-          <p>Live page views and approximate visitor countries. Select the map for the public geographic summary.</p>
+          <p>Privacy-protected visitor regions from the previous 30 completed days. Regions below the configured threshold are withheld.</p>
         </div>
       </div>
-      <a class="visitor-map" href="https://info.flagcounter.com/ahHd" target="_blank" rel="noopener" aria-label="Open visitor geography statistics" data-analytics-event="map_click" data-analytics-target="flag-counter-map">
-        <img data-visitor-map data-src="https://s01.flagcounter.com/map/ahHd/size_l/txt_173F3B/border_CBD7D2/pageviews_1/viewers_0/flags_0/" alt="Live map of visitor countries and page views" width="800" height="375" loading="lazy">
-      </a>
+      <div class="visitor-map-wrap">
+        <div class="visitor-map">
+          <img src="assets/images/world-map.svg" alt="Simplified world map" width="1000" height="500" loading="lazy">
+          <div class="visitor-map-markers" data-visitor-map-markers role="list" aria-label="Approximate recent visitor regions"></div>
+        </div>
+        <p class="visitor-map-status" data-visitor-map-status role="status" aria-live="polite">Markers appear only for regions that meet the configured public threshold.</p>
+      </div>
     </div>
     <p>© 2026 Wenli Zhao</p>
     </div>
