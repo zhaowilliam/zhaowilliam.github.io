@@ -451,6 +451,12 @@ main > .section + .section { border-top: 1px solid var(--line); }
 .feature-copy p { max-width: 52rem; margin-bottom: 0.48rem; color: var(--ink-soft); }
 .feature-link { align-self: center; white-space: nowrap; }
 
+.ranking-snapshot { max-width: 52rem; margin: 1.25rem 0 0; }
+.ranking-snapshot > a { display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 0.9rem; background: var(--white); box-shadow: var(--shadow); }
+.ranking-snapshot img { display: block; width: 100%; height: auto; }
+.ranking-snapshot figcaption { margin-top: 0.6rem; color: var(--ink-soft); font-size: 0.75rem; line-height: 1.55; }
+.ranking-snapshot figcaption a { color: var(--teal); font-weight: 680; text-underline-offset: 0.2rem; }
+
 .media-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
