@@ -698,11 +698,6 @@ main > .section + .section { border-top: 1px solid var(--line); }
 }
 .private-map-detail { min-height: 1.7rem; margin-top: 0.8rem; color: var(--ink-soft); font-size: 0.88rem; }
 .private-map-detail[hidden] { display: none; }
-.policy-page { max-width: 52rem; }
-.policy-page h1 { max-width: 11ch; }
-.policy-page h2 { margin-top: 2.6rem; font-size: 1.7rem; }
-.policy-page p { color: var(--ink-soft); }
-.policy-page a { color: var(--teal); font-weight: 680; }
 
 /* Publications page */
 main > .section:first-child:not(#about) { padding-top: 7rem; padding-bottom: 4rem; }

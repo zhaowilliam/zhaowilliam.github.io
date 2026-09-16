@@ -166,7 +166,7 @@ test("delegated primary/middle clicks classify destinations without URL query, h
 });
 
 test("untagged same-origin CV links are still CV events, with placement preserved", async () => {
-  const page = run({ url: "https://zhaowilliam.github.io/privacy.html" });
+  const page = run({ url: "https://zhaowilliam.github.io/publications.html" });
   const cv = link("https://zhaowilliam.github.io/assets/documents/Wenli_Zhao_CV.pdf?version=secret", {}, "CV");
   const previousClosest = cv.closest;
   cv.closest = (selector) => selector === "header" ? {} : previousClosest(selector);
