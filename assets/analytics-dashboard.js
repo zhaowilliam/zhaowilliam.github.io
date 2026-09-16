@@ -96,13 +96,49 @@
     return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
   }
 
-  if (typeof module !== "undefined" && module.exports) module.exports = { summarizeActivity, formatDateTime, orderEvents, channelFor };
+  function groupIPLocations(rows) {
+    const locations = new Map();
+    const allIPs = new Set();
+    let withoutIP = 0;
+    const coordinate = (value, limit) => {
+      if ((typeof value !== "number" && typeof value !== "string") || String(value).trim() === "") return null;
+      const number = Number(value);
+      return Number.isFinite(number) && Math.abs(number) <= limit ? number : null;
+    };
+    for (const row of orderEvents(rows).reverse()) {
+      const ip = typeof row.ip === "string" ? row.ip.trim() : "";
+      if (!ip) { withoutIP += 1; continue; }
+      let latitude = coordinate(row.latitude, 90);
+      let longitude = coordinate(row.longitude, 180);
+      if (latitude === null || longitude === null) latitude = longitude = null;
+      const key = latitude === null ? "unlocated" : JSON.stringify([latitude, longitude, row.city || "", row.region || "", row.country || ""]);
+      if (!locations.has(key)) locations.set(key, {
+        key, latitude, longitude,
+        label: latitude === null ? "Location unavailable" : [row.city, row.region, row.country].filter(Boolean).join(", ") || "Approximate location",
+        rows: [], ips: new Map(),
+      });
+      const location = locations.get(key);
+      location.rows.push(row);
+      if (!location.ips.has(ip)) location.ips.set(ip, []);
+      location.ips.get(ip).push(row);
+      allIPs.add(ip);
+    }
+    return { locations: [...locations.values()], ipCount: allIPs.size, withoutIP };
+  }
+
+  if (typeof module !== "undefined" && module.exports) module.exports = { summarizeActivity, formatDateTime, orderEvents, channelFor, groupIPLocations };
   if (typeof document === "undefined") return;
 
   const form = document.querySelector("#analytics-export-form");
   const status = document.querySelector("#analytics-export-status");
   const mapElement = document.querySelector("#private-visitor-map");
   const mapDetail = document.querySelector("#private-map-detail");
+  const mapSection = document.querySelector("#analytics-ip-map-section");
+  const mapSummary = document.querySelector("#private-map-summary");
+  const locationSelect = document.querySelector("#private-map-location");
+  const ipSelect = document.querySelector("#private-map-ip");
+  const ipDetails = document.querySelector("#private-map-ip-details");
+  const worldButton = document.querySelector("#private-map-world");
   const report = document.querySelector("#analytics-activity-report");
   const exclusionButton = document.querySelector("#analytics-exclude-browser");
   const exclusionStatus = document.querySelector("#analytics-exclude-status");
@@ -112,6 +148,8 @@
     .replace(/\/$/u, "");
   let visitorMap;
   let visitorLayer;
+  let mapLocations = [];
+  const locationMarkers = new Map();
   let pendingRequest;
 
   if (!form || !status) return;
@@ -140,7 +178,15 @@
   function clearPrivateData() {
     report?.replaceChildren();
     if (report) report.hidden = true;
-    visitorLayer?.clearLayers();
+    visitorMap?.remove();
+    visitorMap = visitorLayer = undefined;
+    mapLocations = [];
+    locationMarkers.clear();
+    locationSelect?.replaceChildren();
+    ipSelect?.replaceChildren();
+    ipDetails?.replaceChildren();
+    if (mapSummary) mapSummary.textContent = "";
+    if (mapSection) mapSection.hidden = true;
     if (mapElement) mapElement.hidden = true;
     if (mapDetail) {
       mapDetail.textContent = "";
@@ -170,21 +216,17 @@
       return;
     }
 
-    status.textContent = action === "map" ? "Loading visitor locations…" : action === "activity" ? "Loading private activity…" : "Preparing export…";
+    status.textContent = action === "map" ? "Loading private IP map…" : action === "activity" ? "Loading private activity and IP map…" : "Preparing export…";
     pendingRequest = new AbortController();
     form.querySelectorAll('button[type="submit"]').forEach((button) => { button.disabled = true; });
 
     try {
-      if (action === "activity") {
+      if (action === "activity" || action === "map") {
         const result = await fetchActivity(token);
-        renderActivity(result);
+        if (pendingRequest.signal.aborted) throw new DOMException("Cancelled", "AbortError");
+        renderMap(result);
+        if (action === "activity") renderActivity(result);
         status.textContent = `Loaded ${result.events.length.toLocaleString()} records from the last 30 days${result.truncated ? "; the 10,000-record limit was reached, so this report is partial" : ""}. All times show server receipt in New York time. The token was not saved.`;
-      } else if (action === "map") {
-        const locations = await fetchLocations(token);
-        renderMap(locations);
-        status.textContent = locations.length
-          ? `Map loaded with ${locations.length} approximate city-level location${locations.length === 1 ? "" : "s"}. The map endpoint does not return IP addresses.`
-          : "No records with approximate coordinates are available yet.";
       } else {
         const csv = await fetchAllCsv(token, (page) => {
           status.textContent = `Preparing export batch ${page}…`;
@@ -323,49 +365,6 @@
     table(activity, ["Received (New York)", "IP", "Approximate location / network", "Action / page", "Source"], ordered.slice(-200).reverse().map((row) => [formatDateTime(row.timestamp_utc), row.ip || "Not retained", locationFor(row), `${describeEvent(row)} · ${row.path || "/"}`, channelFor(row)]));
   }
 
-  async function fetchLocations(token) {
-    const response = await fetch(`${endpoint}/locations.json`, {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: "omit",
-      cache: "no-store",
-      signal: pendingRequest.signal,
-    });
-    if (!response.ok) throw new Error(response.status === 401 ? "The token was not accepted." : "The visitor map could not be prepared.");
-
-    const payload = await response.json();
-    if (!Array.isArray(payload.locations)) throw new Error("The visitor map response was invalid.");
-
-    return payload.locations.flatMap((location) => {
-      const latitude = Number(location.latitude);
-      const longitude = Number(location.longitude);
-      const visitors = Number(location.visitors);
-      const pageViews = Number(location.page_views);
-      if (
-        !Number.isFinite(latitude)
-        || latitude < -90
-        || latitude > 90
-        || !Number.isFinite(longitude)
-        || longitude < -180
-        || longitude > 180
-        || !Number.isSafeInteger(visitors)
-        || visitors < 1
-        || !Number.isSafeInteger(pageViews)
-        || pageViews < 1
-      ) return [];
-
-      return [{
-        latitude,
-        longitude,
-        visitors,
-        pageViews,
-        city: location.city || "",
-        region: location.region || "",
-        country: location.country || "",
-        lastSeen: location.last_seen || "",
-      }];
-    });
-  }
-
   async function fetchAllCsv(token, onPage) {
     const chunks = [];
     let before = null;
@@ -401,88 +400,125 @@
     return chunks.join("\r\n");
   }
 
-  function renderMap(locations) {
-    if (!mapElement || !mapDetail || !window.L) {
-      throw new Error("The interactive map could not be loaded.");
+  function renderMap({ events, truncated }) {
+    if (!mapElement || !mapSection || !locationSelect || !ipSelect || !ipDetails || !mapSummary || !mapDetail) {
+      throw new Error("The IP map controls could not be loaded. Please reload this page.");
     }
-
-    mapElement.hidden = false;
-    mapDetail.hidden = true;
-
-    if (!visitorMap) {
-      visitorMap = window.L.map(mapElement, {
-        preferCanvas: false,
-        scrollWheelZoom: true,
-        worldCopyJump: true,
-      }).setView([20, 0], 2);
-
-      window.L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        {
-          maxZoom: 19,
-          attribution:
-            '<a href="https://goto.arcgisonline.com/maps/World_Imagery" target="_blank" rel="noopener">Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community</a>',
-        },
-      ).addTo(visitorMap);
+    const grouped = groupIPLocations(events);
+    mapLocations = grouped.locations;
+    mapSection.hidden = false;
+    mapDetail.hidden = false;
+    const located = mapLocations.filter((location) => location.latitude !== null);
+    const missing = mapLocations.find((location) => location.key === "unlocated");
+    mapSummary.textContent = `${grouped.ipCount} distinct retained IPs · ${located.length} approximate locations · ${events.length} loaded events · Last 30 days. Loaded ${formatDateTime(new Date())}. ${truncated ? "Partial: newest 10,000 events only. " : ""}${missing ? `${missing.ips.size} IPs have records without coordinates; choose Location unavailable to inspect them. ` : ""}${grouped.withoutIP ? `${grouped.withoutIP} events have no retained IP and are not included on this map. ` : ""}IP counts are not people; an IP can appear at more than one location.`;
+    for (const location of mapLocations) {
+      const option = append(locationSelect, "option", `${location.label} · ${location.ips.size} IP${location.ips.size === 1 ? "" : "s"}`);
+      option.value = location.key;
+    }
+    locationSelect.disabled = ipSelect.disabled = !mapLocations.length;
+    if (!mapLocations.length) {
+      mapElement.hidden = true;
+      worldButton.disabled = true;
+      mapDetail.textContent = "No retained IP records are available in this report.";
+      return;
+    }
+    if (window.L && located.length) {
+      mapElement.hidden = false;
+      worldButton.disabled = false;
+      visitorMap = window.L.map(mapElement, { preferCanvas: false, scrollWheelZoom: true, worldCopyJump: true, zoomSnap: 0.25 }).fitWorld();
+      window.L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 19, noWrap: true, bounds: [[-85.05112878, -180], [85.05112878, 180]],
+        attribution: '<a href="https://goto.arcgisonline.com/maps/World_Imagery" target="_blank" rel="noopener">Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community</a>',
+      }).addTo(visitorMap);
       visitorLayer = window.L.layerGroup().addTo(visitorMap);
-    } else {
-      visitorLayer.clearLayers();
-    }
-
-    const bounds = window.L.latLngBounds([]);
-
-    locations.forEach((location) => {
-      const label = [location.city, location.region, location.country].filter(Boolean).join(", ");
-      const visitors = location.visitors;
-      const pageViews = location.pageViews;
-      const lastSeen = formatDateTime(location.lastSeen);
-      const details = `${label || "Approximate location"}: ${visitors} approximate visitor${visitors === 1 ? "" : "s"}, ${pageViews} page view${pageViews === 1 ? "" : "s"}. Latest visit: ${lastSeen || "unknown"}.`;
-      const popup = document.createElement("p");
-      popup.textContent = details;
-      const marker = window.L.circleMarker([location.latitude, location.longitude], {
-        radius: Math.min(18, 6 + Math.log2(visitors + 1) * 2),
-        color: "#103a42",
-        weight: 2,
-        fillColor: "#d99a3e",
-        fillOpacity: 0.9,
-      });
-      const tooltip = document.createElement("span");
-      tooltip.textContent = label || "Approximate visitor location";
-      marker.bindTooltip(tooltip);
-      marker.bindPopup(popup);
-      const showDetails = () => {
-        mapDetail.textContent = details;
-        mapDetail.hidden = false;
-      };
-      marker.on("click", showDetails);
-      marker.addTo(visitorLayer);
-
-      const markerElement = marker.getElement();
-      if (markerElement) {
-        markerElement.setAttribute("tabindex", "0");
-        markerElement.setAttribute("role", "button");
-        markerElement.setAttribute("aria-label", details);
-        markerElement.addEventListener("keydown", (event) => {
-          if (event.key !== "Enter" && event.key !== " ") return;
-          event.preventDefault();
-          marker.openPopup();
-          showDetails();
+      for (const location of located) {
+        const label = `${location.label}: ${location.ips.size} retained IP${location.ips.size === 1 ? "" : "s"}, ${location.rows.length} events. Select to inspect IP activity.`;
+        const marker = window.L.circleMarker([location.latitude, location.longitude], {
+          radius: Math.min(18, 7 + Math.log2(location.ips.size + 1) * 2), color: "#103a42", weight: 2, fillColor: "#d99a3e", fillOpacity: 0.9,
         });
+        const tooltip = document.createElement("span");
+        tooltip.textContent = label;
+        marker.bindTooltip(tooltip);
+        const popup = document.createElement("p");
+        popup.textContent = label;
+        marker.bindPopup(popup).on("click", () => selectMapLocation(location.key));
+        marker.addTo(visitorLayer);
+        locationMarkers.set(location.key, marker);
+        const element = marker.getElement();
+        if (element) {
+          element.setAttribute("tabindex", "0");
+          element.setAttribute("role", "button");
+          element.setAttribute("aria-label", label);
+          element.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            marker.openPopup();
+            selectMapLocation(location.key);
+          });
+        }
       }
-      bounds.extend(marker.getLatLng());
-    });
-
-    requestAnimationFrame(() => {
-      visitorMap.invalidateSize({ pan: false });
-      if (locations.length === 0) {
-        visitorMap.setView([20, 0], 2);
-      } else if (locations.length === 1) {
-        visitorMap.setView(bounds.getCenter(), 5);
-      } else {
-        visitorMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 7 });
-      }
-    });
+      const activeMap = visitorMap;
+      requestAnimationFrame(() => {
+        if (visitorMap !== activeMap || mapSection.hidden) return;
+        activeMap.invalidateSize({ pan: false });
+        activeMap.fitWorld({ padding: [12, 12], animate: false });
+      });
+    } else {
+      mapElement.hidden = true;
+      worldButton.disabled = true;
+      mapSummary.textContent += window.L ? " No plottable coordinates are available." : " The map library is unavailable; all loaded IP records remain accessible in the selectors below.";
+    }
+    selectMapLocation(mapLocations[0].key);
   }
+
+  function selectMapLocation(key, focus = false) {
+    const location = mapLocations.find((item) => item.key === key);
+    if (!location) return;
+    locationSelect.value = key;
+    ipSelect.replaceChildren();
+    for (const ip of location.ips.keys()) append(ipSelect, "option", ip).value = ip;
+    mapDetail.textContent = `${location.label} · ${location.ips.size} retained IP${location.ips.size === 1 ? "" : "s"}. Select an IP to inspect its events at this location. Use the location menu when nearby markers overlap.`;
+    for (const [markerKey, marker] of locationMarkers) marker.setStyle({ color: markerKey === key ? "#ffffff" : "#103a42", weight: markerKey === key ? 3 : 2 });
+    const marker = locationMarkers.get(key);
+    if (marker && focus) {
+      visitorMap.setView(marker.getLatLng(), Math.max(visitorMap.getZoom(), 6), { animate: false });
+      marker.openPopup();
+    } else if (focus) visitorMap?.closePopup();
+    renderMapIP();
+  }
+
+  function renderMapIP() {
+    ipDetails?.replaceChildren();
+    const location = mapLocations.find((item) => item.key === locationSelect?.value);
+    const rows = location?.ips.get(ipSelect?.value);
+    if (!rows?.length) return;
+    const metadata = append(ipDetails, "dl", undefined, "ip-map-metadata");
+    for (const [label, value] of [
+      ["IP address", ipSelect.value], ["Approximate location", location.label],
+      ["Network", [...new Set(rows.map((row) => row.as_organization).filter(Boolean))].join(" / ") || "Not recorded"],
+      ["First recorded here", formatDateTime(rows.at(-1).timestamp_utc)], ["Latest activity here", formatDateTime(rows[0].timestamp_utc)],
+      ["Loaded activity here", `${rows.filter((row) => row.event === "page_view").length} pageviews · ${rows.filter((row) => row.event === "cv_download").length} CV clicks · ${rows.length} events`],
+      ["Recorded sources", [...new Set(rows.map(channelFor))].join(" / ")],
+    ]) { append(metadata, "dt", label); append(metadata, "dd", value); }
+    append(ipDetails, "p", "Times are New York server receipt times within the loaded 30-day window, not lifetime first visits. IPs and network affiliations do not identify a person. A click does not confirm a completed download or video watch.", "activity-note");
+    const eventTable = (parent, records) => table(parent, ["Received (New York)", "Action / page", "Source"], records.map((row) => [formatDateTime(row.timestamp_utc), `${describeEvent(row)} · ${row.path || "/"}`, channelFor(row)]));
+    const recent = append(ipDetails, "div", undefined, "ip-map-events");
+    eventTable(recent, rows.slice(0, 20));
+    if (rows.length > 20) {
+      const older = append(ipDetails, "details", undefined, "ip-map-events");
+      append(older, "summary", `Show ${rows.length - 20} earlier loaded events for this IP at this location`);
+      older.addEventListener("toggle", () => {
+        if (older.open && !older.querySelector("table")) eventTable(older, rows.slice(20));
+      });
+    }
+  }
+
+  locationSelect?.addEventListener("change", () => selectMapLocation(locationSelect.value, true));
+  ipSelect?.addEventListener("change", renderMapIP);
+  worldButton?.addEventListener("click", () => {
+    visitorMap?.closePopup();
+    visitorMap?.fitWorld({ padding: [12, 12], animate: false });
+  });
 
   function downloadCsv(csv) {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });

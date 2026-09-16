@@ -82,32 +82,48 @@
       <div class="dashboard-note">
         <h2>Legacy counters</h2>
         <p>Validation baseline on August 18, 2026: subtract 1 from every counter before calculating post-launch rates. Official-video click rate ≈ adjusted official video opens ÷ adjusted homepage views. Teaser play rate ≈ adjusted teaser plays ÷ adjusted homepage views.</p>
-        <p>The private map includes two New York test pageviews. Visitor locations are available only on this owner dashboard.</p>
+        <p>The original map baseline included two New York test pageviews. The current private IP map covers only the last 30 days and is available only on this owner dashboard.</p>
       </div>
 
       <div class="dashboard-note private-dashboard">
         <h2>Private activity, visitor map, and export</h2>
         <p>The activity report covers the last 30 days, up to 10,000 records. New interaction details are available only after the enhanced tracking was added. Search Console is not connected: search keywords are not part of this report. <a href="https://support.google.com/webmasters/answer/17011259" target="_blank" rel="noopener noreferrer">About Google's aggregate search-performance report</a>.</p>
-        <p>View approximate city-level visitor locations on an interactive satellite map or download all page-view and click records as one CSV. Each marker represents one city-level location; marker size reflects the approximate visitor count. Drag to move the map, or use the mouse wheel, pinch gesture, or controls to zoom. The map receives only aggregated locations and counts—never IP addresses or visitor identifiers. The export retrieves records in batches of 5,000 and includes raw IP addresses only for records no more than 30 days old, plus approximate country, region, city, postal code, coordinates, and network organization. Location is inferred from the network connection and is not GPS-level positioning.</p>
+        <p>The private IP map uses retained IP addresses from the same loaded 30-day report, up to 10,000 records. Select a location, then an IP address, to inspect its recorded activity. Counts describe distinct IP addresses and events, not people. First and last seen refer only to the loaded records. Network-derived locations are approximate, not GPS positions; some records have no usable coordinates.</p>
+        <p>Drag the map to move, or use the mouse wheel, pinch gesture, or controls to zoom. The tile provider receives ordinary map-tile requests, never IP records or your token. The CSV export retrieves all available records in batches of 5,000 and includes raw IP addresses only for records no more than 30 days old, plus approximate country, region, city, postal code, coordinates, and network organization.</p>
         <form class="export-form" id="analytics-export-form">
           <label for="analytics-token">Private analytics token</label>
           <div>
             <input id="analytics-token" name="token" type="password" autocomplete="off" required>
-            <button class="button button-primary" type="submit" name="action" value="activity">Load activity report</button>
-            <button class="button button-secondary" type="submit" name="action" value="map">Show visitor map</button>
+            <button class="button button-primary" type="submit" name="action" value="activity">Load report &amp; IP map</button>
+            <button class="button button-secondary" type="submit" name="action" value="map">Show IP map</button>
             <button class="button button-secondary" type="submit" name="action" value="download">Download all CSV</button>
           </div>
         </form>
         <p class="export-status" id="analytics-export-status" role="status" aria-live="polite">The token is used only for the requested action and is never saved. Private results are cleared on a new request or when leaving this page. Delete downloaded CSV files within 30 days; local copies are outside the website's automatic cleanup.</p>
+        <section id="analytics-ip-map-section" aria-labelledby="private-map-heading" hidden>
+          <h3 id="private-map-heading">Private IP map</h3>
+          <p id="private-map-summary" aria-live="polite"></p>
+          <div
+            class="private-map"
+            id="private-visitor-map"
+            role="region"
+            aria-label="Interactive satellite map of approximate IP locations; use the location and IP selectors below to inspect records"
+          ></div>
+          <div class="ip-map-controls">
+            <button id="private-map-world" type="button" class="button button-secondary">World view</button>
+            <div>
+              <label for="private-map-location">Location</label>
+              <select id="private-map-location"><option value="">Select a location</option></select>
+            </div>
+            <div>
+              <label for="private-map-ip">IP address</label>
+              <select id="private-map-ip"><option value="">Select an IP address</option></select>
+            </div>
+          </div>
+          <p class="private-map-detail" id="private-map-detail" role="status" aria-live="polite"></p>
+          <div id="private-map-ip-details"></div>
+        </section>
         <div id="analytics-activity-report" hidden></div>
-        <div
-          class="private-map"
-          id="private-visitor-map"
-          role="region"
-          aria-label="Interactive satellite map of approximate visitor locations"
-          hidden
-        ></div>
-        <p class="private-map-detail" id="private-map-detail" role="status" aria-live="polite" hidden></p>
       </div>
     </section>
   </main>
