@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Website counters | Wenli Zhao</title>
+  <title>Private website analytics | Wenli Zhao</title>
   <meta name="theme-color" content="#103a42">
   <meta name="analytics-endpoint" content="https://wenli-site-api.wenlizhao.workers.dev">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -15,6 +15,7 @@
     crossorigin=""
   >
   <link rel="stylesheet" href="assets/site.css">
+  <link rel="stylesheet" href="assets/analytics-dashboard.css">
   <script src="assets/navigation.js" defer></script>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -49,8 +50,15 @@
   <main id="main">
     <section class="section analytics-dashboard">
       <p class="eyebrow">Unlisted owner dashboard</p>
-      <h1>Website counters</h1>
-      <p class="dashboard-intro">Lightweight counters for homepage views and first video interactions. This page is omitted from site navigation and asks search engines not to index it; the visitor map and CSV export require the private token. Counts are approximate: reloads can add views, while each video event is recorded only once per page load.</p>
+      <h1>Private website analytics</h1>
+      <p class="dashboard-intro">See research interests, click paths, and technical issues without changing the public website. Activity, visitor locations, and exports require your private token. Sessions describe visits, not identifiable people; clicks do not prove a download, a completed email, or a reader's intent.</p>
+
+      <div class="dashboard-note">
+        <h2>Your browser</h2>
+        <p>Exclude your own testing on this browser and website. This preference does not identify you or exclude your visits on other browsers and devices.</p>
+        <button class="button button-secondary" id="analytics-exclude-browser" type="button">Exclude this browser from analytics</button>
+        <p id="analytics-exclude-status" role="status" aria-live="polite"></p>
+      </div>
 
       <div class="counter-grid">
         <article class="counter-card">
@@ -72,23 +80,26 @@
       </div>
 
       <div class="dashboard-note">
-        <h2>Reading the click rate</h2>
+        <h2>Legacy counters</h2>
         <p>Validation baseline on August 18, 2026: subtract 1 from every counter before calculating post-launch rates. Official-video click rate ≈ adjusted official video opens ÷ adjusted homepage views. Teaser play rate ≈ adjusted teaser plays ÷ adjusted homepage views.</p>
         <p>The private map includes two New York test pageviews. Visitor locations are available only on this owner dashboard.</p>
       </div>
 
-      <div class="dashboard-note">
-        <h2>Private visitor map and export</h2>
+      <div class="dashboard-note private-dashboard">
+        <h2>Private activity, visitor map, and export</h2>
+        <p>The activity report covers the last 30 days, up to 10,000 records. New interaction details are available only after the enhanced tracking was added. Search Console is not connected: search keywords are not part of this report. <a href="https://support.google.com/webmasters/answer/17011259" target="_blank" rel="noopener noreferrer">About Google's aggregate search-performance report</a>.</p>
         <p>View approximate city-level visitor locations on an interactive satellite map or download all page-view and click records as one CSV. Each marker represents one city-level location; marker size reflects the approximate visitor count. Drag to move the map, or use the mouse wheel, pinch gesture, or controls to zoom. The map receives only aggregated locations and counts—never IP addresses or visitor identifiers. The export retrieves records in batches of 5,000 and includes raw IP addresses only for records no more than 30 days old, plus approximate country, region, city, postal code, coordinates, and network organization. Location is inferred from the network connection and is not GPS-level positioning.</p>
         <form class="export-form" id="analytics-export-form">
           <label for="analytics-token">Private analytics token</label>
           <div>
             <input id="analytics-token" name="token" type="password" autocomplete="off" required>
-            <button class="button button-primary" type="submit" name="action" value="map">Show visitor map</button>
+            <button class="button button-primary" type="submit" name="action" value="activity">Load activity report</button>
+            <button class="button button-secondary" type="submit" name="action" value="map">Show visitor map</button>
             <button class="button button-secondary" type="submit" name="action" value="download">Download all CSV</button>
           </div>
         </form>
-        <p class="export-status" id="analytics-export-status" role="status" aria-live="polite">The token is used only for this request and is not stored in the page. Delete downloaded CSV files within 30 days; local copies are outside the website's automatic cleanup.</p>
+        <p class="export-status" id="analytics-export-status" role="status" aria-live="polite">The token is used only for the requested action and is never saved. Private results are cleared on a new request or when leaving this page. Delete downloaded CSV files within 30 days; local copies are outside the website's automatic cleanup.</p>
+        <div id="analytics-activity-report" hidden></div>
         <div
           class="private-map"
           id="private-visitor-map"

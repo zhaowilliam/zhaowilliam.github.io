@@ -5,9 +5,19 @@ const EVENTS = new Set([
   "teaser_play",
   "video_doi_click",
   "cv_download",
+  "paper_click",
+  "outbound_click",
+  "contact_click",
+  "navigation_click",
+  "section_view",
+  "scroll_depth",
+  "engagement",
+  "video_progress",
+  "resource_error",
+  "page_performance",
 ]);
 
-const MAX_BODY_BYTES = 2048;
+const MAX_BODY_BYTES = 4096;
 const encoder = new TextEncoder();
 
 class HttpError extends Error {
@@ -40,10 +50,17 @@ export default {
         return await locationsJson(request, env);
       }
 
+      if (url.pathname === "/events.json") {
+        if (request.method === "OPTIONS") return exportPreflight(request, env);
+        if (request.method !== "GET") return methodNotAllowed("GET, OPTIONS");
+        return await eventsJson(request, env, url);
+      }
+
       return text("Not found", 404);
     } catch (error) {
       const status = error instanceof HttpError ? error.status : 500;
-      if (status === 500) console.error("Analytics Worker failure", error);
+      // Do not log visitor payloads, database bind values, or authorization headers.
+      if (status === 500) console.error("Analytics Worker failure");
 
       const origin = request.headers.get("origin");
       const headers = isAllowedOrigin(origin, env) ? corsHeaders(origin) : {};
@@ -56,8 +73,8 @@ export default {
   async scheduled(_controller, env) {
     await env.DB.prepare(`
       UPDATE events
-      SET ip = NULL
-      WHERE ip IS NOT NULL
+      SET ip = NULL, session_id = NULL
+      WHERE (ip IS NOT NULL OR session_id IS NOT NULL)
         AND occurred_at < datetime('now', '-30 days')
     `).run();
   },
@@ -66,6 +83,10 @@ export default {
 async function collect(request, env) {
   const origin = request.headers.get("origin");
   requireAllowedOrigin(origin, env);
+
+  if (request.headers.get("sec-gpc") === "1" || request.headers.get("dnt") === "1") {
+    return new Response(null, { status: 204, headers: { ...baseHeaders(), ...corsHeaders(origin) } });
+  }
 
   const ip = trustedText(request.headers.get("cf-connecting-ip"), 64);
   if (env.RATE_LIMITER) {
@@ -103,6 +124,9 @@ async function collect(request, env) {
   }
 
   const target = optionalText(body.target, 160, "target");
+  const eventId = optionalUuid(body.event_id, "event_id");
+  const sessionId = optionalUuid(body.session_id, "session_id");
+  const details = cleanDetails(body.details);
   const referrerDomain = hostnameOnly(body.referrer_domain);
   const month = new Date().toISOString().slice(0, 7);
   const visitorHash = await hmacHex(env.HASH_SECRET, `${month}:${ip || "unavailable"}`);
@@ -112,11 +136,13 @@ async function collect(request, env) {
     INSERT INTO events (
       event, path, target, referrer_domain, ip, visitor_hash,
       country, region, region_code, city, postal_code,
-      latitude, longitude, timezone, asn, as_organization
+      latitude, longitude, timezone, asn, as_organization,
+      event_id, session_id, details_json
     ) VALUES (
       ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8,
-      ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16
+      ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19
     )
+    ON CONFLICT(event_id) DO NOTHING
   `).bind(
     body.event,
     path,
@@ -134,6 +160,9 @@ async function collect(request, env) {
     trustedText(cf.timezone, 64),
     safeInteger(cf.asn),
     trustedText(cf.asOrganization, 160),
+    eventId,
+    sessionId,
+    JSON.stringify(details),
   ).run();
 
   return new Response(null, {
@@ -212,7 +241,10 @@ async function exportCsv(request, env, url) {
       END AS ip,
       visitor_hash,
       country, region, region_code, city, postal_code,
-      latitude, longitude, timezone, asn, as_organization
+      latitude, longitude, timezone, asn, as_organization,
+      event_id,
+      CASE WHEN occurred_at >= datetime('now', '-30 days') THEN session_id ELSE NULL END AS session_id,
+      details_json
     FROM events
     WHERE id < ?1
     ORDER BY id DESC
@@ -223,6 +255,7 @@ async function exportCsv(request, env, url) {
     "id", "timestamp_utc", "event", "path", "target", "referrer_domain",
     "ip", "visitor_hash", "country", "region", "region_code", "city",
     "postal_code", "latitude", "longitude", "timezone", "asn", "as_organization",
+    "event_id", "session_id", "details_json",
   ];
   const rows = [
     columns.join(","),
@@ -239,6 +272,33 @@ async function exportCsv(request, env, url) {
   if (results.length) headers["X-Next-Before"] = String(results.at(-1).id);
 
   return new Response(rows.join("\r\n"), { headers });
+}
+
+async function eventsJson(request, env, url) {
+  const access = await authorizePrivateGet(request, env);
+  if (access.response) return access.response;
+  const days = integerParam(url.searchParams.get("days"), 30, 1, 30);
+  const limit = integerParam(url.searchParams.get("limit"), 1000, 1, 5000);
+  const before = integerParam(url.searchParams.get("before"), Number.MAX_SAFE_INTEGER, 1, Number.MAX_SAFE_INTEGER);
+  const { results } = await env.DB.prepare(`
+    SELECT id, replace(occurred_at, ' ', 'T') || 'Z' AS timestamp_utc,
+      event, path, target, referrer_domain, ip, visitor_hash,
+      country, region, region_code, city, postal_code,
+      latitude, longitude, timezone, asn, as_organization,
+      event_id, session_id, details_json
+    FROM events
+    WHERE id < ?1 AND occurred_at >= datetime('now', ?2)
+    ORDER BY id DESC LIMIT ?3
+  `).bind(before, `-${days} days`, limit).all();
+  const events = results.map(({ details_json, ...row }) => ({
+    ...row,
+    details: JSON.parse(details_json || "{}"),
+  }));
+  return Response.json({
+    events,
+    days,
+    next_before: results.length === limit ? results.at(-1).id : null,
+  }, { headers: { ...baseHeaders(), ...access.adminCors } });
 }
 
 async function locationsJson(request, env) {
@@ -403,6 +463,66 @@ function optionalText(value, maximum, label) {
   return requiredText(value, maximum, label);
 }
 
+function optionalUuid(value, label) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value)) {
+    throw new HttpError(400, `Invalid ${label}`);
+  }
+  return value.toLowerCase();
+}
+
+function cleanDetails(value) {
+  if (value === undefined || value === null) return {};
+  if (typeof value !== "object" || Array.isArray(value)) throw new HttpError(400, "Invalid details");
+  const cleaned = {};
+  const choices = {
+    device: ["mobile", "tablet", "desktop"],
+    viewport: ["small", "medium", "large"],
+    browser: ["chrome", "edge", "firefox", "safari", "other"],
+    error_kind: ["image", "script", "video", "resource"],
+    percent: [25, 50, 75, 90, 100],
+  };
+  const ranges = { seconds: [0, 28800], load_ms: [0, 120000], sequence: [1, 10000] };
+  for (const [key, raw] of Object.entries(value)) {
+    if (key === "entry_referrer") {
+      const hostname = hostnameOnly(raw);
+      if (raw !== null && !hostname) throw new HttpError(400, "Invalid entry_referrer");
+      cleaned[key] = hostname;
+      continue;
+    }
+    if (raw === null || raw === "") continue;
+    if (Object.hasOwn(choices, key)) {
+      if (!choices[key].includes(raw)) throw new HttpError(400, `Invalid ${key}`);
+      cleaned[key] = raw;
+    } else if (Object.hasOwn(ranges, key)) {
+      const [min, max] = ranges[key];
+      if (!Number.isSafeInteger(raw) || raw < min || raw > max) throw new HttpError(400, `Invalid ${key}`);
+      cleaned[key] = raw;
+    } else if (key === "page_id") {
+      cleaned[key] = optionalUuid(raw, key);
+    } else if (key === "label") {
+      cleaned[key] = requiredText(raw, 160, key);
+    } else if (["placement", "topic", "utm_source", "utm_medium", "utm_campaign"].includes(key)) {
+      if (typeof raw !== "string" || !/^[a-z0-9_-]{1,64}$/iu.test(raw)) throw new HttpError(400, `Invalid ${key}`);
+      cleaned[key] = raw;
+    } else if (key === "link_url") {
+      if (raw === "mailto") {
+        cleaned[key] = raw;
+      } else {
+        const input = requiredText(raw, 512, key);
+        let link;
+        try { link = new URL(input); } catch { throw new HttpError(400, "Invalid link_url"); }
+        if (!["http:", "https:"].includes(link.protocol) || link.username || link.password) throw new HttpError(400, "Invalid link_url");
+        // Destination only: never store query parameters, fragments, or mail contents.
+        cleaned[key] = `${link.origin}${link.pathname}`;
+      }
+    } else {
+      throw new HttpError(400, "Unknown details field");
+    }
+  }
+  return cleaned;
+}
+
 function trustedText(value, maximum) {
   if (typeof value !== "string") return null;
   const cleaned = value.trim();
@@ -410,11 +530,13 @@ function trustedText(value, maximum) {
 }
 
 function finiteNumber(value) {
+  if (value === undefined || value === null || value === "") return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
 
 function safeInteger(value) {
+  if (value === undefined || value === null || value === "") return null;
   const number = Number(value);
   return Number.isSafeInteger(number) ? number : null;
 }
